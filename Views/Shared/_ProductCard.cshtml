@@ -1,0 +1,25 @@
+@model Product
+<a class="card" asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id">
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <img class="thumb" src="@Model.ImageUrl" alt="@Model.Name" loading="lazy" />
+    }
+    else
+    {
+        <div class="thumb" style="background:@Model.Color">@Model.Category?.Icon</div>
+    }
+    <div class="info">
+        <h3>@Model.Name</h3>
+        @if (Model.StockQuantity <= 0)
+        {
+            <span class="badge">Hết hàng</span>
+        }
+        <div class="price">
+            <b>@Model.Price.Money()</b>
+            @if (Model.OldPrice.HasValue)
+            {
+                <s>@Model.OldPrice.Value.Money()</s>
+            }
+        </div>
+    </div>
+</a>

@@ -1,0 +1,16 @@
+@model LoginVm
+@{ ViewData["Title"] = "Đăng nhập"; }
+<div class="form-box">
+    <h2>Đăng nhập</h2>
+    <form asp-action="Login" method="post">
+        <div asp-validation-summary="ModelOnly" class="err"></div>
+        <input type="hidden" asp-for="ReturnUrl" />
+        <label>Email<input asp-for="Email" autocomplete="email" /></label>
+        <span asp-validation-for="Email" class="err"></span>
+        <label>Mật khẩu<input asp-for="Password" autocomplete="current-password" /></label>
+        <span asp-validation-for="Password" class="err"></span>
+        <button class="btn">Đăng nhập</button>
+    </form>
+    <p>Chưa có tài khoản? <a asp-action="Register">Đăng ký</a></p>
+    <p class="hint">Tài khoản demo: demo@canifa.vn / Demo@123</p>
+</div>

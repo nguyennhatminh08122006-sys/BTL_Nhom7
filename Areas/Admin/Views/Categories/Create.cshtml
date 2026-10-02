@@ -1,0 +1,46 @@
+@model CategoryFormVm
+@{ ViewData["Title"] = "Thêm danh mục"; }
+<div class="admin-page-heading">
+    <div><h1>Thêm danh mục</h1><p class="admin-muted">Nhập thông tin danh mục mới</p></div>
+    <a class="admin-secondary-button" asp-area="Admin" asp-controller="Categories" asp-action="Index">Quay lại</a>
+</div>
+<section class="admin-panel admin-form-panel">
+    <form asp-area="Admin" asp-controller="Categories" asp-action="Create" method="post" class="admin-form">
+        <div asp-validation-summary="ModelOnly" class="admin-validation"></div>
+        <label asp-for="Name">Tên danh mục</label>
+        <input asp-for="Name" autocomplete="off" />
+        <span asp-validation-for="Name" class="admin-validation"></span>
+
+        <label asp-for="Slug">Slug</label>
+        <input asp-for="Slug" autocomplete="off" />
+        <span asp-validation-for="Slug" class="admin-validation"></span>
+
+        <label asp-for="Icon">Icon <span class="admin-muted">(không bắt buộc)</span></label>
+        <input asp-for="Icon" maxlength="10" />
+        <span asp-validation-for="Icon" class="admin-validation"></span>
+
+        <div class="admin-form-actions">
+            <button class="admin-primary-button" type="submit">Lưu danh mục</button>
+            <a class="admin-secondary-button" asp-area="Admin" asp-controller="Categories" asp-action="Index">Hủy</a>
+        </div>
+    </form>
+</section>
+<script>
+    (() => {
+        const nameInput = document.getElementById("Name");
+        const slugInput = document.getElementById("Slug");
+        let slugEdited = false;
+        slugInput.addEventListener("input", () => slugEdited = true);
+        nameInput.addEventListener("input", () => {
+            if (slugEdited) return;
+            const slug = nameInput.value
+                .toLowerCase()
+                .replace(/đ/g, "d")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "");
+            slugInput.value = slug;
+        });
+    })();
+</script>

@@ -1,0 +1,53 @@
+@model CartIndexVm
+@{ ViewData["Title"] = "Giỏ hàng"; }
+<h2>Giỏ hàng</h2>
+@if (Model.Items.Count == 0)
+{
+    <p class="empty">Giỏ hàng của bạn đang trống. <a asp-controller="Products" asp-action="Index">Tiếp tục mua sắm</a></p>
+}
+else
+{
+    <table class="tbl">
+        <thead><tr><th>Sản phẩm</th><th>Size</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var l in Model.Items)
+        {
+            <tr>
+                <td>
+                    @if (!string.IsNullOrEmpty(l.ImageUrl))
+                    {
+                        <img class="mini" src="@l.ImageUrl" alt="@l.Name" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="mini" style="background:@l.Color">@l.Icon</span>
+                    }
+                    @l.Name
+                </td>
+                <td>@l.Size</td>
+                <td>@l.Price.Money()</td>
+                <td>
+                    <form asp-action="Update" method="post" class="inline">
+                        <input type="hidden" name="productId" value="@l.ProductId" />
+                        <input type="hidden" name="size" value="@l.Size" />
+                        <input type="number" name="quantity" value="@l.Quantity" min="0" max="20" aria-label="Số lượng" />
+                        <button class="small">Cập nhật</button>
+                    </form>
+                </td>
+                <td>@((l.Price * l.Quantity).Money())</td>
+                <td>
+                    <form asp-action="Remove" method="post" class="inline">
+                        <input type="hidden" name="productId" value="@l.ProductId" />
+                        <input type="hidden" name="size" value="@l.Size" />
+                        <button class="link">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="total">
+        <span>Tổng cộng:</span> <b>@Model.Total.Money()</b>
+        <a class="btn" asp-controller="Orders" asp-action="Checkout">Đặt hàng</a>
+    </div>
+}

@@ -1,0 +1,59 @@
+@model DashboardVm
+@{ ViewData["Title"] = "Tổng quan quản trị"; }
+<div class="admin-page-heading">
+    <div>
+        <h1>Tổng quan</h1>
+        <p class="admin-muted">Tình hình hoạt động của cửa hàng</p>
+    </div>
+</div>
+
+<section class="admin-stat-grid" aria-label="Thống kê cửa hàng">
+    <article class="admin-stat"><span>Danh mục</span><strong>@Model.CategoryCount</strong></article>
+    <article class="admin-stat"><span>Sản phẩm đang bán</span><strong>@Model.ActiveProductCount</strong></article>
+    <article class="admin-stat"><span>Sản phẩm ngừng bán</span><strong>@Model.InactiveProductCount</strong></article>
+    <a class="admin-stat" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-role="Customer"><span>Tài khoản khách hàng</span><strong>@Model.CustomerCount</strong></a>
+    <a class="admin-stat" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-role="Admin"><span>Tài khoản quản trị</span><strong>@Model.AdminCount</strong></a>
+    <a class="admin-stat" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-status="locked"><span>Tài khoản bị khóa</span><strong>@Model.LockedAccountCount</strong></a>
+    <a class="admin-stat" asp-area="Admin" asp-controller="Carts" asp-action="Index"><span>Tổng số giỏ hàng</span><strong>@Model.CartCount</strong></a>
+    <a class="admin-stat" asp-area="Admin" asp-controller="Carts" asp-action="Index" asp-route-status="withItems"><span>Giỏ có hàng</span><strong>@Model.CartsWithItemsCount</strong></a>
+</section>
+
+<section class="admin-panel">
+    <h2>Đơn hàng theo trạng thái</h2>
+    <div class="admin-stat-grid admin-status-grid">
+        @foreach (var item in Model.OrdersByStatus)
+        {
+            <a class="admin-stat" asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-status="@item.Status">
+                <span class="admin-status @OrderStatus.GetBadgeClass(item.Status)">@item.Status</span><strong>@item.Count</strong>
+            </a>
+        }
+    </div>
+</section>
+
+<section class="admin-panel">
+    <h2>5 đơn hàng mới nhất</h2>
+    @if (Model.RecentOrders.Count == 0)
+    {
+        <p class="admin-muted">Chưa có đơn hàng.</p>
+    }
+    else
+    {
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr><th>Mã đơn</th><th>Ngày tạo</th><th>Người nhận</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead>
+                <tbody>
+                @foreach (var order in Model.RecentOrders)
+                {
+                    <tr>
+                        <td><a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">#@order.Id</a></td>
+                        <td>@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@order.ReceiverName</td>
+                        <td>@order.Total.Money()</td>
+                        <td><span class="admin-status @OrderStatus.GetBadgeClass(order.Status)">@order.Status</span></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

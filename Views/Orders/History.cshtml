@@ -1,0 +1,22 @@
+@model List<Order>
+@{ ViewData["Title"] = "Đơn hàng của tôi"; }
+<h2>Đơn hàng của tôi</h2>
+@if (Model.Count == 0)
+{
+    <p class="empty">Bạn chưa có đơn hàng nào.</p>
+}
+else
+{
+    foreach (var o in Model)
+    {
+        <section class="order">
+            <div class="oh"><b>Đơn #@o.Id</b><span>@o.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span><span class="badge">@o.Status</span><b>@o.Total.Money()</b></div>
+            <ul>
+                @foreach (var i in o.Items)
+                {
+                    <li>@i.ProductName (@i.Size) × @i.Quantity – @((i.UnitPrice * i.Quantity).Money())</li>
+                }
+            </ul>
+        </section>
+    }
+}

@@ -1,0 +1,119 @@
+@model UserIndexVm
+@{ ViewData["Title"] = "Quản lý tài khoản"; }
+<div class="admin-page-heading">
+    <div><h1>Tài khoản</h1><p class="admin-muted">@Model.TotalCount tài khoản</p></div>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="admin-alert admin-alert-success" role="status">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert admin-alert-error" role="alert">@error</div>
+}
+
+<form class="admin-filter" method="get" asp-area="Admin" asp-controller="Users" asp-action="Index">
+    <label>Tìm kiếm<input type="search" name="q" value="@Model.Query" placeholder="Họ tên, email, số điện thoại" /></label>
+    <label>Vai trò
+        <select name="role">
+            <option value="">Tất cả</option>
+            <option value="Admin" selected="@(Model.Role == "Admin")">Admin</option>
+            <option value="Customer" selected="@(Model.Role == "Customer")">Customer</option>
+        </select>
+    </label>
+    <label>Trạng thái
+        <select name="status">
+            <option value="">Tất cả</option>
+            <option value="active" selected="@(Model.Status == "active")">Hoạt động</option>
+            <option value="locked" selected="@(Model.Status == "locked")">Đã khóa</option>
+        </select>
+    </label>
+    <button class="admin-primary-button" type="submit">Lọc</button>
+</form>
+
+<section class="admin-panel">
+    @if (Model.Users.Count == 0)
+    {
+        <p class="admin-muted">Không tìm thấy tài khoản.</p>
+    }
+    else
+    {
+        <div class="admin-table-wrap">
+            <table class="admin-table admin-users-table">
+                <thead><tr><th>Id</th><th>Họ tên</th><th>Email</th><th>Số điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th>Số đơn</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                @foreach (var account in Model.Users)
+                {
+                    <tr>
+                        <td>@account.Id</td>
+                        <td>
+                            @account.FullName
+                            @if (account.IsCurrentUser)
+                            {
+                                <span class="admin-user-you">Bạn</span>
+                            }
+                        </td>
+                        <td>@account.Email</td>
+                        <td>@(account.Phone ?? "—")</td>
+                        <td><span class="admin-user-role @(account.Role == "Admin" ? "admin-user-role-admin" : "")">@account.Role</span></td>
+                        <td><span class="admin-user-status @(account.IsLocked ? "admin-user-status-locked" : "admin-user-status-active")">@(account.IsLocked ? "Đã khóa" : "Hoạt động")</span></td>
+                        <td>@account.OrderCount</td>
+                        <td>
+                            <div class="admin-row-actions admin-user-actions">
+                                <a class="admin-secondary-button" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@account.Id">Xem</a>
+                                @if (account.IsCurrentUser)
+                                {
+                                    <span class="admin-user-you">Tài khoản của bạn</span>
+                                }
+                                else
+                                {
+                                    @if (account.DisableLock)
+                                    {
+                                        <button class="admin-secondary-button" type="button" disabled title="@account.LockDisabledReason">Khóa</button>
+                                    }
+                                    else
+                                    {
+                                        <form asp-area="Admin" asp-controller="Users" asp-action="ToggleLock" method="post">
+                                            <input type="hidden" name="id" value="@account.Id" />
+                                            <input type="hidden" name="locked" value="@(!account.IsLocked)" />
+                                            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                                            <button class="admin-secondary-button" type="submit">@(account.IsLocked ? "Mở khóa" : "Khóa")</button>
+                                        </form>
+                                    }
+                                    @if (account.DisableDelete)
+                                    {
+                                        <button class="admin-danger-button" type="button" disabled title="@account.DeleteDisabledReason">Xóa</button>
+                                    }
+                                    else
+                                    {
+                                        <form asp-area="Admin" asp-controller="Users" asp-action="Delete" method="post" onsubmit="return confirm(this.dataset.confirmMessage)" data-confirm-message="Xác nhận xóa tài khoản @account.FullName (@account.Email)?">
+                                            <input type="hidden" name="id" value="@account.Id" />
+                                            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                                            <button class="admin-danger-button" type="submit">Xóa</button>
+                                        </form>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="admin-pagination" aria-label="Phân trang">
+            @if (Model.Page > 1)
+            {
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-q="@Model.Query" asp-route-role="@Model.Role" asp-route-status="@Model.Status">Trước</a>
+            }
+            <span>Trang @Model.Page / @Model.TotalPages</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-q="@Model.Query" asp-route-role="@Model.Role" asp-route-status="@Model.Status">Sau</a>
+            }
+        </nav>
+    }
+</section>

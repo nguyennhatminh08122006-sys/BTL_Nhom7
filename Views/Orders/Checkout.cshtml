@@ -1,0 +1,29 @@
+@model CheckoutVm
+@{ ViewData["Title"] = "Đặt hàng"; }
+<div class="checkout">
+    <div class="form-box">
+        <h2>Thông tin giao hàng</h2>
+        <form asp-action="Checkout" method="post">
+            <div asp-validation-summary="ModelOnly" class="err"></div>
+            <label>Người nhận<input asp-for="ReceiverName" /></label>
+            <span asp-validation-for="ReceiverName" class="err"></span>
+            <label>Số điện thoại<input asp-for="Phone" /></label>
+            <span asp-validation-for="Phone" class="err"></span>
+            <label>Địa chỉ giao hàng<input asp-for="Address" /></label>
+            <span asp-validation-for="Address" class="err"></span>
+            <label>Ghi chú<textarea asp-for="Note" rows="3"></textarea></label>
+            <button class="btn">Xác nhận đặt hàng</button>
+        </form>
+    </div>
+    <aside class="summary">
+        <h3>Đơn hàng của bạn</h3>
+        <ul>
+            @foreach (var l in Model.CartItems)
+            {
+                <li><span>@l.Name (@l.Size) × @l.Quantity</span><b>@((l.Price * l.Quantity).Money())</b></li>
+            }
+        </ul>
+        <div class="total"><span>Tổng cộng:</span> <b>@Model.CartTotal.Money()</b></div>
+        <p class="hint">Thanh toán khi nhận hàng (COD).</p>
+    </aside>
+</div>

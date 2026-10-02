@@ -1,0 +1,87 @@
+@model ProductFormVm
+@{ ViewData["Title"] = "Sửa sản phẩm"; }
+<div class="admin-page-heading">
+    <div><h1>Sửa sản phẩm</h1><p class="admin-muted">Cập nhật sản phẩm #@Model.Id</p></div>
+    <a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Index">Quay lại</a>
+</div>
+<section class="admin-panel admin-form-panel admin-product-form-panel">
+    <form asp-area="Admin" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="admin-form">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="admin-validation"></div>
+
+        <label asp-for="Name">Tên sản phẩm</label>
+        <input asp-for="Name" maxlength="200" />
+        <span asp-validation-for="Name" class="admin-validation"></span>
+
+        <label asp-for="Description">Mô tả</label>
+        <textarea asp-for="Description" rows="4" maxlength="2000"></textarea>
+        <span asp-validation-for="Description" class="admin-validation"></span>
+
+        <label asp-for="CategoryId">Danh mục</label>
+        <select asp-for="CategoryId">
+            <option value="">-- Chọn danh mục --</option>
+            @foreach (var category in (List<CategoryOptionVm>)ViewBag.Categories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+        </select>
+        <span asp-validation-for="CategoryId" class="admin-validation"></span>
+
+        <div class="admin-form-grid">
+            <div>
+                <label asp-for="Price">Giá bán (VND)</label>
+                <input asp-for="Price" type="number" min="1" step="1" />
+                <span asp-validation-for="Price" class="admin-validation"></span>
+            </div>
+            <div>
+                <label asp-for="OldPrice">Giá gốc (không bắt buộc)</label>
+                <input asp-for="OldPrice" type="number" min="1" step="1" />
+                <span asp-validation-for="OldPrice" class="admin-validation"></span>
+            </div>
+        </div>
+
+        <label asp-for="Sizes">Size</label>
+        <input asp-for="Sizes" list="size-suggestions" />
+        <datalist id="size-suggestions">
+            <option value="S,M,L,XL"></option>
+            <option value="3-4,5-6,7-8,9-10"></option>
+            <option value="Free size"></option>
+        </datalist>
+        <span class="admin-field-hint">Size được chuẩn hóa khi lưu. Nếu bỏ size đang có trong giỏ hoặc đơn đang xử lý, dữ liệu size cũ sẽ không còn khớp.</span>
+        <span asp-validation-for="Sizes" class="admin-validation"></span>
+
+        <div class="admin-form-grid">
+            <div>
+                <label asp-for="StockQuantity">Tồn kho</label>
+                <input asp-for="StockQuantity" type="number" min="0" step="1" />
+                <span asp-validation-for="StockQuantity" class="admin-validation"></span>
+            </div>
+            <div>
+                <label asp-for="Color">Màu nền dự phòng</label>
+                <input asp-for="Color" placeholder="#EEEEEE" />
+                <span class="admin-field-hint">Chỉ dùng làm nền khi sản phẩm chưa có ảnh, không phải lựa chọn màu khi mua.</span>
+                <span asp-validation-for="Color" class="admin-validation"></span>
+            </div>
+        </div>
+
+        <label class="admin-checkbox"><input asp-for="IsActive" /> Đang bán</label>
+        <label class="admin-checkbox"><input asp-for="IsFeatured" /> Sản phẩm nổi bật</label>
+
+        @if (!string.IsNullOrEmpty(Model.CurrentImageUrl))
+        {
+            <div class="admin-current-image">
+                <span>Ảnh hiện tại</span>
+                <img src="@Model.CurrentImageUrl" alt="Ảnh hiện tại của @Model.Name" />
+            </div>
+        }
+        <label asp-for="ImageFile">Thay ảnh (không bắt buộc)</label>
+        <input asp-for="ImageFile" type="file" accept=".jpg,.jpeg,.png,.webp" />
+        <span class="admin-field-hint">Bỏ trống để giữ ảnh hiện tại. Chỉ nhận JPG, JPEG, PNG hoặc WEBP; tối đa 2 MB.</span>
+        <span asp-validation-for="ImageFile" class="admin-validation"></span>
+
+        <div class="admin-form-actions">
+            <button class="admin-primary-button" type="submit">Lưu thay đổi</button>
+            <a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Index">Hủy</a>
+        </div>
+    </form>
+</section>

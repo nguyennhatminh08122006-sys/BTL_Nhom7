@@ -1,0 +1,248 @@
+@using System.Text.Json
+@model StatsVm
+@{
+    ViewData["Title"] = "Thống kê";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var sevenDaysFrom = today.AddDays(-6).ToString("yyyy-MM-dd");
+    var thirtyDaysFrom = today.AddDays(-29).ToString("yyyy-MM-dd");
+    var todayText = today.ToString("yyyy-MM-dd");
+    var monthFrom = new DateOnly(today.Year, today.Month, 1).ToString("yyyy-MM-dd");
+    var revenueChangeClass = !Model.RevenueChangePercent.HasValue ? "" : Model.RevenueChangePercent.Value >= 0 ? "admin-stat-change-up" : "admin-stat-change-down";
+    var completedChangeClass = !Model.CompletedCountChangePercent.HasValue ? "" : Model.CompletedCountChangePercent.Value >= 0 ? "admin-stat-change-up" : "admin-stat-change-down";
+    var averageChangeClass = !Model.AverageOrderChangePercent.HasValue ? "" : Model.AverageOrderChangePercent.Value >= 0 ? "admin-stat-change-up" : "admin-stat-change-down";
+    var chartJsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+}
+
+<div class="admin-page-heading">
+    <div><h1>Thống kê</h1><p class="admin-muted">Khoảng đang xem: @Model.FromDate.ToString("dd/MM/yyyy") – @Model.ToDate.ToString("dd/MM/yyyy")</p></div>
+</div>
+@if (!string.IsNullOrWhiteSpace(Model.FilterNotice))
+{
+    <div class="admin-alert admin-alert-error" role="status">@Model.FilterNotice</div>
+}
+
+<section class="admin-panel admin-stats-filter">
+    <div class="admin-stats-quick-links" aria-label="Khoảng thời gian nhanh">
+        <a class="admin-secondary-button" asp-area="Admin" asp-controller="Stats" asp-action="Index" asp-route-from="@sevenDaysFrom" asp-route-to="@todayText">7 ngày</a>
+        <a class="admin-secondary-button" asp-area="Admin" asp-controller="Stats" asp-action="Index" asp-route-from="@thirtyDaysFrom" asp-route-to="@todayText">30 ngày</a>
+        <a class="admin-secondary-button" asp-area="Admin" asp-controller="Stats" asp-action="Index" asp-route-from="@monthFrom" asp-route-to="@todayText">Tháng này</a>
+    </div>
+    <form class="admin-filter admin-stats-date-form" method="get" asp-area="Admin" asp-controller="Stats" asp-action="Index">
+        <label>Từ ngày<input type="date" name="from" value="@Model.FromDate.ToString("yyyy-MM-dd")" /></label>
+        <label>Đến ngày<input type="date" name="to" value="@Model.ToDate.ToString("yyyy-MM-dd")" /></label>
+        <button class="admin-primary-button" type="submit">Áp dụng</button>
+    </form>
+</section>
+
+<section class="admin-stat-grid admin-stats-kpis" aria-label="Chỉ số chính">
+    <article class="admin-stat">
+        <span>Doanh thu</span><strong>@Model.Revenue.Money()</strong>
+        <small class="admin-stat-change @revenueChangeClass">So với kỳ trước: @(Model.RevenueChangePercent.HasValue ? $"{Model.RevenueChangePercent.Value:+0.0;-0.0;0.0}%" : "—")</small>
+        <small class="admin-muted">Chỉ tính đơn hoàn thành</small>
+    </article>
+    <article class="admin-stat">
+        <span>Đơn hoàn thành</span><strong>@Model.CompletedOrderCount</strong>
+        <small class="admin-stat-change @completedChangeClass">So với kỳ trước: @(Model.CompletedCountChangePercent.HasValue ? $"{Model.CompletedCountChangePercent.Value:+0.0;-0.0;0.0}%" : "—")</small>
+    </article>
+    <article class="admin-stat">
+        <span>Trung bình mỗi đơn</span><strong>@(Model.AverageOrderValue.HasValue ? Model.AverageOrderValue.Value.Money() : "—")</strong>
+        <small class="admin-stat-change @averageChangeClass">So với kỳ trước: @(Model.AverageOrderChangePercent.HasValue ? $"{Model.AverageOrderChangePercent.Value:+0.0;-0.0;0.0}%" : "—")</small>
+    </article>
+    <article class="admin-stat">
+        <span>Tỉ lệ hủy</span><strong>@(Model.CancellationRate.HasValue ? $"{Model.CancellationRate.Value:0.0}%" : "—")</strong>
+        <small class="admin-muted">@Model.TotalOrderCount đơn đặt trong kỳ</small>
+    </article>
+    <article class="admin-stat admin-stat-pending">
+        <span>Đơn đang chờ xử lý · hiện tại</span><strong>@(Model.WaitingNewCount + Model.WaitingConfirmedCount)</strong>
+        <div class="admin-pending-links">
+            <a asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-status="@OrderStatus.New">Mới (@Model.WaitingNewCount)</a>
+            <a asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-status="@OrderStatus.Confirmed">Đã xác nhận (@Model.WaitingConfirmedCount)</a>
+        </div>
+    </article>
+</section>
+
+<div id="stats-chart-data" data-chart-data="@JsonSerializer.Serialize(Model.Charts, chartJsonOptions)"></div>
+<div class="admin-stats-chart-grid">
+    <section class="admin-panel admin-chart-panel">
+        <h2>Doanh thu theo thời gian</h2>
+        <p class="admin-muted">Tính theo ngày đặt hàng; khoảng trên 92 ngày được gộp theo tháng. Chỉ tính đơn hoàn thành.</p>
+        @if (!Model.HasCompletedOrders)
+        {
+            <p class="admin-stats-empty">Chưa có dữ liệu trong khoảng thời gian này</p>
+        }
+        else
+        {
+            <div class="admin-chart-canvas"><canvas id="revenue-chart" aria-label="Biểu đồ doanh thu theo thời gian, tính theo ngày đặt hàng" role="img"></canvas></div>
+            <details class="admin-chart-summary"><summary>Xem bảng số liệu</summary>
+                <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Thời gian</th><th>Doanh thu</th></tr></thead><tbody>
+                @for (var i = 0; i < Model.Charts.TimelineLabels.Count; i++)
+                {
+                    <tr><td>@Model.Charts.TimelineLabels[i]</td><td>@Model.Charts.TimelineRevenue[i].Money()</td></tr>
+                }
+                </tbody></table></div>
+            </details>
+        }
+    </section>
+
+    <section class="admin-panel admin-chart-panel">
+        <h2>Đơn hàng theo trạng thái</h2>
+        @if (!Model.HasOrders)
+        {
+            <p class="admin-stats-empty">Chưa có dữ liệu trong khoảng thời gian này</p>
+            <details class="admin-chart-summary"><summary>Trạng thái đơn hàng trong kỳ</summary>
+                <ul class="admin-stats-status-list">
+                @foreach (var item in Model.OrderStatuses)
+                {
+                    <li><span class="admin-status @OrderStatus.GetBadgeClass(item.Status)">@item.Status</span><b>@item.Count</b></li>
+                }
+                </ul>
+            </details>
+        }
+        else
+        {
+            <div class="admin-chart-canvas admin-chart-doughnut"><canvas id="status-chart" aria-label="Biểu đồ đơn hàng theo đủ năm trạng thái" role="img"></canvas></div>
+            <details class="admin-chart-summary"><summary>Xem bảng số liệu</summary>
+                <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Trạng thái</th><th>Số đơn</th></tr></thead><tbody>
+                @foreach (var item in Model.OrderStatuses)
+                {
+                    <tr><td><span class="admin-status @OrderStatus.GetBadgeClass(item.Status)">@item.Status</span></td><td>@item.Count</td></tr>
+                }
+                </tbody></table></div>
+            </details>
+        }
+    </section>
+
+    <section class="admin-panel admin-chart-panel">
+        <h2>Top 5 sản phẩm bán chạy</h2>
+        <p class="admin-muted">Xếp theo số lượng bán của đơn hoàn thành; doanh thu sản phẩm không gồm phí giao hàng và giảm giá.</p>
+        @if (Model.TopProducts.Count == 0)
+        {
+            <p class="admin-stats-empty">Chưa có dữ liệu trong khoảng thời gian này</p>
+        }
+        else
+        {
+            <div class="admin-chart-canvas"><canvas id="products-chart" aria-label="Biểu đồ năm sản phẩm bán chạy theo số lượng" role="img"></canvas></div>
+            <details class="admin-chart-summary"><summary>Xem bảng số liệu</summary>
+                <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Doanh thu sản phẩm</th></tr></thead><tbody>
+                @foreach (var item in Model.TopProducts)
+                {
+                    <tr><td>@item.Name</td><td>@item.Quantity</td><td>@item.Revenue.Money()</td></tr>
+                }
+                </tbody></table></div>
+            </details>
+        }
+    </section>
+
+    <section class="admin-panel admin-chart-panel">
+        <h2>Doanh thu theo danh mục</h2>
+        <p class="admin-muted">Tổng UnitPrice × Quantity của đơn hoàn thành; không gồm phí giao hàng và giảm giá.</p>
+        @if (!Model.HasCategoryRevenue)
+        {
+            <p class="admin-stats-empty">Chưa có dữ liệu trong khoảng thời gian này</p>
+        }
+        else
+        {
+            <div class="admin-chart-canvas"><canvas id="categories-chart" aria-label="Biểu đồ doanh thu sản phẩm theo danh mục" role="img"></canvas></div>
+            <details class="admin-chart-summary"><summary>Xem bảng số liệu</summary>
+                <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Danh mục</th><th>Doanh thu sản phẩm</th></tr></thead><tbody>
+                @foreach (var item in Model.Categories)
+                {
+                    <tr><td>@item.Name</td><td>@item.Revenue.Money()</td></tr>
+                }
+                </tbody></table></div>
+            </details>
+        }
+    </section>
+</div>
+
+<section class="admin-panel">
+    <h2>Sản phẩm sắp hết hàng</h2>
+    <p class="admin-muted">Tồn kho hiện tại · ngưỡng cảnh báo: @Model.LowStockThreshold sản phẩm</p>
+    @if (Model.LowStockProducts.Count == 0)
+    {
+        <p class="admin-muted">Không có sản phẩm đang bán dưới ngưỡng tồn kho.</p>
+    }
+    else
+    {
+        <div class="admin-table-wrap">
+            <table class="admin-table admin-low-stock-table">
+                <thead><tr><th>Ảnh</th><th>Sản phẩm</th><th>Danh mục</th><th>Tồn kho</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var product in Model.LowStockProducts)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+                            {
+                                <img class="admin-stats-thumb" src="@product.ImageUrl" alt="@product.Name" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="admin-stats-thumb admin-stats-fallback" style="background:@product.Color">@product.Icon</span>
+                            }
+                        </td>
+                        <td>@product.Name</td><td>@product.CategoryName</td>
+                        <td>
+                            @if (product.StockQuantity == 0)
+                            {
+                                <span class="admin-product-status admin-product-status-out">Hết hàng</span>
+                            }
+                            else
+                            {
+                                @product.StockQuantity
+                            }
+                        </td>
+                        <td><a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Edit" asp-route-id="@product.Id">Sửa</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+    (() => {
+        const payload = document.getElementById("stats-chart-data");
+        const charts = JSON.parse(payload.dataset.chartData);
+        const formatMoney = value => `${Math.round(Number(value)).toLocaleString("vi-VN")} đ`;
+        const axisMoney = value => formatMoney(value);
+
+        const revenueCanvas = document.getElementById("revenue-chart");
+        if (revenueCanvas) {
+            new Chart(revenueCanvas, {
+                type: "line",
+                data: { labels: charts.timelineLabels, datasets: [{ label: "Doanh thu", data: charts.timelineRevenue, borderColor: "#c8102e", backgroundColor: "rgba(200,16,46,.12)", fill: true, tension: .25 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: axisMoney } } }, plugins: { tooltip: { callbacks: { label: context => `Doanh thu: ${formatMoney(context.parsed.y)}` } } } }
+            });
+        }
+
+        const statusCanvas = document.getElementById("status-chart");
+        if (statusCanvas) {
+            new Chart(statusCanvas, {
+                type: "doughnut",
+                data: { labels: charts.statusLabels, datasets: [{ data: charts.statusCounts, backgroundColor: charts.statusColors, borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { filter: () => true } }, tooltip: { callbacks: { label: context => `${context.label}: ${context.raw.toLocaleString("vi-VN")} đơn` } } } }
+            });
+        }
+
+        const productsCanvas = document.getElementById("products-chart");
+        if (productsCanvas) {
+            new Chart(productsCanvas, {
+                type: "bar",
+                data: { labels: charts.productLabels, datasets: [{ label: "Số lượng bán", data: charts.productQuantities, backgroundColor: "#3974c6" }] },
+                options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }, plugins: { tooltip: { callbacks: { label: context => `${context.parsed.x.toLocaleString("vi-VN")} sản phẩm · doanh thu ${formatMoney(charts.productRevenue[context.dataIndex])}` } } } }
+            });
+        }
+
+        const categoriesCanvas = document.getElementById("categories-chart");
+        if (categoriesCanvas) {
+            new Chart(categoriesCanvas, {
+                type: "bar",
+                data: { labels: charts.categoryLabels, datasets: [{ label: "Doanh thu sản phẩm", data: charts.categoryRevenue, backgroundColor: "#7654bd" }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: axisMoney } } }, plugins: { tooltip: { callbacks: { label: context => formatMoney(context.parsed.y) } } } }
+            });
+        }
+    })();
+</script>

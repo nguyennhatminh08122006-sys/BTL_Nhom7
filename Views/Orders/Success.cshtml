@@ -1,0 +1,9 @@
+@model Order
+@{ ViewData["Title"] = "Đặt hàng thành công"; }
+<div class="form-box center">
+    <h2>Đặt hàng thành công 🎉</h2>
+    <p>Mã đơn hàng: <b>#@Model.Id</b></p>
+    <p>Tổng thanh toán: <b>@Model.Total.Money()</b> (COD)</p>
+    <p>Giao đến: @Model.ReceiverName, @Model.Address</p>
+    <a class="btn" asp-controller="Orders" asp-action="History">Xem đơn hàng của tôi</a>
+</div>

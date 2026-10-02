@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "Quản trị | Canifa Shop")</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/admin.css" />
+</head>
+<body class="admin-body">
+    <div class="admin-shell">
+        <aside class="admin-sidebar">
+            <a class="admin-brand" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">CANIFA <span>ADMIN</span></a>
+            <nav class="admin-nav" aria-label="Điều hướng quản trị">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Tổng quan</a>
+                <a asp-area="Admin" asp-controller="Stats" asp-action="Index">Thống kê</a>
+                <a asp-area="Admin" asp-controller="Categories" asp-action="Index">Danh mục</a>
+                <a asp-area="Admin" asp-controller="Products" asp-action="Index">Sản phẩm</a>
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index">Đơn hàng</a>
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index">Tài khoản</a>
+                <a asp-area="Admin" asp-controller="Carts" asp-action="Index">Giỏ hàng</a>
+            </nav>
+        </aside>
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <span>Xin chào, <strong>@User.Identity?.Name</strong></span>
+                <div class="admin-top-actions">
+                    <a asp-area="" asp-controller="Home" asp-action="Index">Về cửa hàng</a>
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                        <button class="admin-logout" type="submit">Đăng xuất</button>
+                    </form>
+                </div>
+            </header>
+            <main class="admin-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+</body>
+</html>

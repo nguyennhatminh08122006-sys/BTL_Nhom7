@@ -1,0 +1,17 @@
+@model List<Product>
+@{ ViewData["Title"] = "Canifa Shop – Thời trang mỗi ngày"; var cats = (List<Category>)ViewBag.Categories; }
+<section class="hero">
+    <h1>Thời trang mỗi ngày,<br />thoải mái từng chi tiết</h1>
+    <p>Bộ sưu tập mới cho Nữ, Nam, Trẻ em và phụ kiện.</p>
+    <a class="btn" asp-controller="Products" asp-action="Index">Mua sắm ngay</a>
+</section>
+<section class="cats">
+    @foreach (var c in cats)
+    {
+        <a asp-controller="Products" asp-action="Index" asp-route-category="@c.Slug"><span>@c.Icon</span>@c.Name</a>
+    }
+</section>
+<h2>Sản phẩm nổi bật</h2>
+<div class="grid">
+    @foreach (var p in Model) { <partial name="_ProductCard" model="p" /> }
+</div>

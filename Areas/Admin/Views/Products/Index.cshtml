@@ -1,0 +1,122 @@
+@model ProductIndexVm
+@{ ViewData["Title"] = "Quản lý sản phẩm"; }
+<div class="admin-page-heading">
+    <div><h1>Sản phẩm</h1><p class="admin-muted">@Model.TotalCount sản phẩm phù hợp</p></div>
+    <a class="admin-primary-button" asp-area="Admin" asp-controller="Products" asp-action="Create">Thêm sản phẩm</a>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="admin-alert admin-alert-success" role="status">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert admin-alert-error" role="alert">@error</div>
+}
+
+<form class="admin-filter" asp-area="Admin" asp-controller="Products" asp-action="Index" method="get">
+    <label>Tên sản phẩm <input type="search" name="q" value="@Model.Query" /></label>
+    <label>Danh mục
+        <select name="categoryId">
+            <option value="" selected="@(Model.CategoryId == null ? "selected" : null)">Tất cả</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id" selected="@(Model.CategoryId == category.Id ? "selected" : null)">@category.Name</option>
+            }
+        </select>
+    </label>
+    <label>Trạng thái
+        <select name="status">
+            <option value="" selected="@(Model.Status == "" ? "selected" : null)">Tất cả</option>
+            <option value="selling" selected="@(Model.Status == "selling" ? "selected" : null)">Đang bán</option>
+            <option value="out-of-stock" selected="@(Model.Status == "out-of-stock" ? "selected" : null)">Hết hàng</option>
+            <option value="inactive" selected="@(Model.Status == "inactive" ? "selected" : null)">Ngừng bán</option>
+        </select>
+    </label>
+    <button class="admin-primary-button" type="submit">Lọc</button>
+    <a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Index">Xóa lọc</a>
+</form>
+
+<section class="admin-panel">
+    @if (Model.Products.Count == 0)
+    {
+        <p class="admin-muted">Không tìm thấy sản phẩm phù hợp.</p>
+    }
+    else
+    {
+        <div class="admin-table-wrap">
+            <table class="admin-table admin-products-table">
+                <thead><tr><th>Ảnh</th><th>Id</th><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Trạng thái</th><th>Nổi bật</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                @foreach (var product in Model.Products)
+                {
+                    var statusText = !product.IsActive ? "Ngừng bán" : product.StockQuantity == 0 ? "Hết hàng" : "Đang bán";
+                    var statusClass = !product.IsActive ? "inactive" : product.StockQuantity == 0 ? "out" : "active";
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(product.ImageUrl))
+                            {
+                                <img class="admin-product-thumb" src="@product.ImageUrl" alt="@product.Name" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="admin-product-fallback" style="background:@product.Color">@product.CategoryIcon</span>
+                            }
+                        </td>
+                        <td>@product.Id</td>
+                        <td>@product.Name</td>
+                        <td>@product.CategoryName</td>
+                        <td>
+                            <span>@product.Price.Money()</span>
+                            @if (product.OldPrice.HasValue)
+                            {
+                                <s class="admin-old-price">@product.OldPrice.Value.Money()</s>
+                            }
+                        </td>
+                        <td>@product.StockQuantity</td>
+                        <td><span class="admin-product-status admin-product-status-@statusClass">@statusText</span></td>
+                        <td>@(product.IsFeatured ? "Có" : "Không")</td>
+                        <td>
+                            <div class="admin-row-actions admin-product-actions">
+                                <a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">Xem</a>
+                                <a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Edit" asp-route-id="@product.Id">Sửa</a>
+                                <form asp-area="Admin" asp-controller="Products" asp-action="ToggleActive" method="post">
+                                    <input type="hidden" name="id" value="@product.Id" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                    <input type="hidden" name="status" value="@Model.Status" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <button class="admin-secondary-button" type="submit">@(product.IsActive ? "Ẩn" : "Hiện")</button>
+                                </form>
+                                <form asp-area="Admin" asp-controller="Products" asp-action="Delete" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                                    <input type="hidden" name="id" value="@product.Id" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                    <input type="hidden" name="status" value="@Model.Status" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <button class="admin-danger-button" type="submit">Xóa</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="admin-pagination" aria-label="Phân trang sản phẩm">
+        @if (Model.Page > 1)
+        {
+            <a asp-area="Admin" asp-controller="Products" asp-action="Index" asp-route-q="@Model.Query" asp-route-categoryId="@Model.CategoryId" asp-route-status="@Model.Status" asp-route-page="@(Model.Page - 1)">Trước</a>
+        }
+        <span>Trang @Model.Page / @Model.TotalPages</span>
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a asp-area="Admin" asp-controller="Products" asp-action="Index" asp-route-q="@Model.Query" asp-route-categoryId="@Model.CategoryId" asp-route-status="@Model.Status" asp-route-page="@(Model.Page + 1)">Sau</a>
+        }
+    </nav>
+}

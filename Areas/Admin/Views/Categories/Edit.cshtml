@@ -1,0 +1,28 @@
+@model CategoryFormVm
+@{ ViewData["Title"] = "Sửa danh mục"; }
+<div class="admin-page-heading">
+    <div><h1>Sửa danh mục</h1><p class="admin-muted">Cập nhật thông tin danh mục #@Model.Id</p></div>
+    <a class="admin-secondary-button" asp-area="Admin" asp-controller="Categories" asp-action="Index">Quay lại</a>
+</div>
+<section class="admin-panel admin-form-panel">
+    <form asp-area="Admin" asp-controller="Categories" asp-action="Edit" asp-route-id="@Model.Id" method="post" class="admin-form">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="admin-validation"></div>
+        <label asp-for="Name">Tên danh mục</label>
+        <input asp-for="Name" autocomplete="off" />
+        <span asp-validation-for="Name" class="admin-validation"></span>
+
+        <label asp-for="Slug">Slug</label>
+        <input asp-for="Slug" autocomplete="off" />
+        <span asp-validation-for="Slug" class="admin-validation"></span>
+
+        <label asp-for="Icon">Icon <span class="admin-muted">(không bắt buộc)</span></label>
+        <input asp-for="Icon" maxlength="10" />
+        <span asp-validation-for="Icon" class="admin-validation"></span>
+
+        <div class="admin-form-actions">
+            <button class="admin-primary-button" type="submit">Lưu thay đổi</button>
+            <a class="admin-secondary-button" asp-area="Admin" asp-controller="Categories" asp-action="Index">Hủy</a>
+        </div>
+    </form>
+</section>

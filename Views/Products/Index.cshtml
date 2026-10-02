@@ -1,0 +1,37 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Sản phẩm";
+    var cats = (List<Category>)ViewBag.Categories;
+    string? cur = ViewBag.Current; string? q = ViewBag.Q; string? sort = ViewBag.Sort;
+}
+<div class="head">
+    <h2>@(cats.FirstOrDefault(c => c.Slug == cur)?.Name ?? "Tất cả sản phẩm")</h2>
+    <form method="get" class="sort">
+        <input type="hidden" name="category" value="@cur" />
+        <input type="hidden" name="q" value="@q" />
+        <label>Sắp xếp
+            <select name="sort" onchange="this.form.submit()">
+                <option value="" selected="@(string.IsNullOrEmpty(sort))">Mới nhất</option>
+                <option value="price_asc" selected="@(sort == "price_asc")">Giá tăng dần</option>
+                <option value="price_desc" selected="@(sort == "price_desc")">Giá giảm dần</option>
+            </select>
+        </label>
+    </form>
+</div>
+<div class="chips">
+    <a asp-action="Index" class="@(string.IsNullOrEmpty(cur) ? "on" : "")">Tất cả</a>
+    @foreach (var c in cats)
+    {
+        <a asp-action="Index" asp-route-category="@c.Slug" class="@(cur == c.Slug ? "on" : "")">@c.Name</a>
+    }
+</div>
+@if (Model.Count == 0)
+{
+    <p class="empty">Không tìm thấy sản phẩm phù hợp.</p>
+}
+else
+{
+    <div class="grid">
+        @foreach (var p in Model) { <partial name="_ProductCard" model="p" /> }
+    </div>
+}

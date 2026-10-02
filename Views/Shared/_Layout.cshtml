@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "Canifa Shop")</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+<header class="top">
+    <div class="wrap bar">
+        <a class="logo" asp-controller="Home" asp-action="Index">CANIFA</a>
+        <nav class="menu">
+            @await Component.InvokeAsync("CategoryMenu")
+        </nav>
+        <form class="search" asp-controller="Products" asp-action="Index" method="get">
+            <input name="q" placeholder="Tìm sản phẩm..." aria-label="Tìm sản phẩm" />
+        </form>
+        <div class="acct">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Orders" asp-action="History">@User.Identity.Name</a>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="inline">
+                    <button class="link">Đăng xuất</button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                <a asp-controller="Account" asp-action="Register">Đăng ký</a>
+            }
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Admin" asp-action="Index">Quản trị</a>
+            }
+            <a class="cart" asp-controller="Cart" asp-action="Index">
+                Giỏ hàng
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <b>@await Component.InvokeAsync("CartCount")</b>
+                }
+            </a>
+        </div>
+    </div>
+</header>
+<main class="wrap">@RenderBody()</main>
+<footer class="foot"><div class="wrap">Canifa Shop – dự án học tập ASP.NET Core MVC</div></footer>
+</body>
+</html>

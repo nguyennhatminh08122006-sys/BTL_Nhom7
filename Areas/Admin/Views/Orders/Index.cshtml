@@ -1,0 +1,69 @@
+@model OrderIndexVm
+@{ ViewData["Title"] = "Quản lý đơn hàng"; }
+<div class="admin-page-heading">
+    <div><h1>Đơn hàng</h1><p class="admin-muted">@Model.TotalCount đơn hàng trong kết quả</p></div>
+</div>
+
+<section class="admin-stat-grid admin-status-grid" aria-label="Lọc theo trạng thái">
+    @foreach (var item in Model.StatusCounts)
+    {
+        <a class="admin-stat" asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-status="@item.Status">
+            <span class="admin-status @OrderStatus.GetBadgeClass(item.Status)">@item.Status</span><strong>@item.Count</strong>
+        </a>
+    }
+</section>
+
+<form class="admin-filter" method="get" asp-area="Admin" asp-controller="Orders" asp-action="Index">
+    <label>Tìm kiếm<input type="search" name="q" value="@Model.Query" placeholder="Mã đơn, người nhận, số điện thoại" /></label>
+    <label>Trạng thái
+        <select name="status"><option value="">Tất cả</option>
+            @foreach (var status in OrderStatus.All)
+            {
+                <option value="@status" selected="@(Model.Status == status)">@status</option>
+            }
+        </select>
+    </label>
+    <label>Từ ngày<input type="date" name="from" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" /></label>
+    <label>Đến ngày<input type="date" name="to" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" /></label>
+    <button class="admin-primary-button" type="submit">Lọc</button>
+</form>
+
+<section class="admin-panel">
+    <div class="admin-table-wrap">
+        <table class="admin-table admin-orders-table">
+            <thead><tr><th>Mã đơn</th><th>Ngày tạo</th><th>Khách hàng</th><th>Người nhận</th><th>Điện thoại</th><th>Số lượng</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
+            <tbody>
+            @if (Model.Orders.Count == 0)
+            {
+                <tr><td colspan="9" class="admin-muted">Không tìm thấy đơn hàng.</td></tr>
+            }
+            else
+            {
+                @foreach (var order in Model.Orders)
+                {
+                    <tr>
+                        <td>#@order.Id</td><td>@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td><td>@order.CustomerName</td>
+                        <td>@order.ReceiverName</td><td>@order.Phone</td><td>@order.ProductCount</td><td>@order.Total.Money()</td>
+                        <td><span class="admin-status @OrderStatus.GetBadgeClass(order.Status)">@order.Status</span></td>
+                        <td><a class="admin-secondary-button" asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">Chi tiết</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="admin-pagination" aria-label="Phân trang">
+            @if (Model.Page > 1)
+            {
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-status="@Model.Status" asp-route-q="@Model.Query" asp-route-from="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-to="@Model.ToDate?.ToString("yyyy-MM-dd")">Trước</a>
+            }
+            <span>Trang @Model.Page / @Model.TotalPages</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-status="@Model.Status" asp-route-q="@Model.Query" asp-route-from="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-to="@Model.ToDate?.ToString("yyyy-MM-dd")">Sau</a>
+            }
+        </nav>
+    }
+</section>

@@ -1,0 +1,8 @@
+@model List<Category>
+@{
+    var current = ViewContext.HttpContext.Request.Query["category"].ToString();
+}
+@foreach (var category in Model)
+{
+    <a asp-area="" asp-controller="Products" asp-action="Index" asp-route-category="@category.Slug" class="@(current == category.Slug ? "on" : "")">@category.Name</a>
+}

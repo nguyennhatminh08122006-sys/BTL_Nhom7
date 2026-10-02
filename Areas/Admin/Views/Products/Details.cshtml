@@ -1,0 +1,37 @@
+@model Product
+@{ ViewData["Title"] = "Chi tiết sản phẩm"; var status = !Model.IsActive ? "Ngừng bán" : Model.StockQuantity == 0 ? "Hết hàng" : "Đang bán"; }
+<div class="admin-page-heading">
+    <div><h1>Chi tiết sản phẩm</h1><p class="admin-muted">Sản phẩm #@Model.Id</p></div>
+    <div class="admin-form-actions">
+        <a class="admin-primary-button" asp-area="Admin" asp-controller="Products" asp-action="Edit" asp-route-id="@Model.Id">Sửa sản phẩm</a>
+        <a class="admin-secondary-button" asp-area="Admin" asp-controller="Products" asp-action="Index">Quay lại</a>
+    </div>
+</div>
+<section class="admin-panel admin-product-detail">
+    <div class="admin-product-detail-image">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img class="admin-detail-image" src="@Model.ImageUrl" alt="@Model.Name" />
+        }
+        else
+        {
+            <div class="admin-detail-fallback" style="background:@Model.Color">@Model.Category?.Icon</div>
+        }
+    </div>
+    <div class="admin-product-detail-content">
+        <h2>@Model.Name</h2>
+        <dl class="admin-detail-list">
+            <dt>Mô tả</dt><dd>@(string.IsNullOrWhiteSpace(Model.Description) ? "Chưa có mô tả" : Model.Description)</dd>
+            <dt>Danh mục</dt><dd>@Model.Category?.Name</dd>
+            <dt>Giá bán</dt><dd>@Model.Price.Money()</dd>
+            <dt>Giá gốc</dt><dd>@(Model.OldPrice.HasValue ? Model.OldPrice.Value.Money() : "Không có")</dd>
+            <dt>Size</dt><dd>@Model.Sizes</dd>
+            <dt>Tồn kho</dt><dd>@Model.StockQuantity</dd>
+            <dt>Trạng thái</dt><dd>@status</dd>
+            <dt>Nổi bật</dt><dd>@(Model.IsFeatured ? "Có" : "Không")</dd>
+            <dt>Màu nền dự phòng</dt><dd><span class="admin-color-swatch" style="background:@Model.Color"></span> @Model.Color</dd>
+            <dt>Đơn hàng có sản phẩm</dt><dd>@ViewBag.OrderCount</dd>
+            <dt>Giỏ hàng đang chứa sản phẩm</dt><dd>@ViewBag.CartCount</dd>
+        </dl>
+    </div>
+</section>

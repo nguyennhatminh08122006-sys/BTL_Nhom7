@@ -1,0 +1,82 @@
+@model AdminCartIndexVm
+@{ ViewData["Title"] = "Quản lý giỏ hàng"; }
+<div class="admin-page-heading">
+    <div><h1>Giỏ hàng</h1><p class="admin-muted">@Model.TotalCount giỏ hàng · Giá trị theo giá hiện tại, chưa phải đơn hàng</p></div>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="admin-alert admin-alert-success" role="status">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert admin-alert-error" role="alert">@error</div>
+}
+
+<form class="admin-filter" method="get" asp-area="Admin" asp-controller="Carts" asp-action="Index">
+    <label>Tìm khách hàng<input type="search" name="q" value="@Model.Query" placeholder="Họ tên hoặc email" /></label>
+    <label>Trạng thái
+        <select name="status">
+            <option value="">Tất cả</option>
+            <option value="withItems" selected="@(Model.Status == "withItems")">Có hàng</option>
+            <option value="empty" selected="@(Model.Status == "empty")">Trống</option>
+        </select>
+    </label>
+    <button class="admin-primary-button" type="submit">Lọc</button>
+</form>
+
+<section class="admin-panel">
+    @if (Model.Carts.Count == 0)
+    {
+        <p class="admin-muted">Không tìm thấy giỏ hàng.</p>
+    }
+    else
+    {
+        <div class="admin-table-wrap">
+            <table class="admin-table admin-carts-table">
+                <thead><tr><th>Mã giỏ</th><th>Khách hàng</th><th>Số dòng</th><th>Tổng số lượng</th><th>Giá trị ước tính</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                @foreach (var cart in Model.Carts)
+                {
+                    <tr>
+                        <td>#@cart.Id</td>
+                        <td>@cart.CustomerName<br /><span class="admin-muted">@cart.CustomerEmail</span></td>
+                        <td>@cart.LineCount</td>
+                        <td>@cart.TotalQuantity</td>
+                        <td>@cart.EstimatedValue.Money()</td>
+                        <td>@cart.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div class="admin-row-actions">
+                                <a class="admin-secondary-button" asp-area="Admin" asp-controller="Carts" asp-action="Details" asp-route-id="@cart.Id" asp-route-returnUrl="@Model.ReturnUrl">Xem</a>
+                                <form asp-area="Admin" asp-controller="Carts" asp-action="Delete" method="post" onsubmit="return confirm(this.dataset.confirmMessage)" data-confirm-message="Xác nhận xóa toàn bộ giỏ của @cart.CustomerName (@cart.CustomerEmail)? Tồn kho không thay đổi.">
+                                    <input type="hidden" name="id" value="@cart.Id" />
+                                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                                    <button class="admin-danger-button" type="submit">Xóa</button>
+                                </form>
+                            </div>
+                            @if (!cart.HasItems)
+                            {
+                                <span class="admin-cart-empty">Giỏ trống</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="admin-pagination" aria-label="Phân trang">
+            @if (Model.Page > 1)
+            {
+                <a asp-area="Admin" asp-controller="Carts" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-q="@Model.Query" asp-route-status="@Model.Status">Trước</a>
+            }
+            <span>Trang @Model.Page / @Model.TotalPages</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-area="Admin" asp-controller="Carts" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-q="@Model.Query" asp-route-status="@Model.Status">Sau</a>
+            }
+        </nav>
+    }
+</section>

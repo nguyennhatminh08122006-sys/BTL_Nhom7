@@ -1,0 +1,75 @@
+@model AdminOrderDetailsVm
+@{ ViewData["Title"] = $"Đơn hàng #{Model.Id}"; }
+<div class="admin-page-heading">
+    <div><h1>Đơn hàng #@Model.Id</h1><p class="admin-muted">Tạo lúc @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p></div>
+    <a class="admin-secondary-button" asp-area="Admin" asp-controller="Orders" asp-action="Index">Quay lại danh sách</a>
+</div>
+@if (TempData["Success"] is string success)
+{
+    <div class="admin-alert admin-alert-success">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert admin-alert-error">@error</div>
+}
+
+<section class="admin-stat-grid">
+    <article class="admin-stat"><span>Trạng thái</span><strong><span class="admin-status @OrderStatus.GetBadgeClass(Model.Status)">@Model.Status</span></strong></article>
+    <article class="admin-stat"><span>Thanh toán</span><strong>@Model.PaymentMethod</strong></article>
+</section>
+
+<section class="admin-panel admin-order-actions">
+    @if (Model.NextStatuses.Count == 0)
+    {
+        <p class="admin-muted">Đơn hàng đã kết thúc, không thể cập nhật trạng thái.</p>
+    }
+    else
+    {
+        @foreach (var nextStatus in Model.NextStatuses)
+        {
+            <form asp-area="Admin" asp-controller="Orders" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" onsubmit="@(nextStatus == OrderStatus.Cancelled ? "return confirm('Hủy đơn hàng? Tồn kho sẽ được hoàn lại.');" : null)">
+                <input type="hidden" name="targetStatus" value="@nextStatus" />
+                <button class="@(nextStatus == OrderStatus.Cancelled ? "admin-danger-button" : "admin-primary-button")" type="submit">@OrderStatus.GetActionLabel(nextStatus)</button>
+            </form>
+        }
+    }
+</section>
+
+<div class="admin-order-details-grid">
+    <section class="admin-panel">
+        <h2>Thông tin khách hàng và giao hàng</h2>
+        <dl class="admin-detail-list">
+            <dt>Khách hàng</dt><dd>@Model.CustomerName</dd><dt>Email</dt><dd>@Model.CustomerEmail</dd>
+            <dt>Người nhận</dt><dd>@Model.ReceiverName</dd><dt>Số điện thoại</dt><dd>@Model.Phone</dd>
+            <dt>Địa chỉ</dt><dd>@Model.Address</dd><dt>Ghi chú</dt><dd>@(string.IsNullOrWhiteSpace(Model.Note) ? "—" : Model.Note)</dd>
+        </dl>
+    </section>
+    <section class="admin-panel">
+        <h2>Sản phẩm trong đơn</h2>
+        <div class="admin-table-wrap"><table class="admin-table admin-order-lines">
+            <thead><tr><th>Sản phẩm</th><th>Size</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr><td>
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                    {
+                        <img class="admin-order-thumb" src="@item.ImageUrl" alt="@item.ProductName" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="admin-order-thumb admin-order-fallback" style="background:@item.Color">@item.Icon</span>
+                    }
+                    @item.ProductName
+                </td><td>@item.Size</td><td>@item.Quantity</td><td>@item.UnitPrice.Money()</td><td>@((item.UnitPrice * item.Quantity).Money())</td></tr>
+            }
+            </tbody>
+        </table></div>
+        <dl class="admin-order-totals">
+            <dt>Tạm tính</dt><dd>@Model.Subtotal.Money()</dd>
+            <dt>Phí vận chuyển</dt><dd>@Model.ShippingFee.Money()</dd>
+            <dt>Giảm giá@(string.IsNullOrWhiteSpace(Model.DiscountCode) ? "" : $" ({Model.DiscountCode})")</dt><dd>−@Model.DiscountAmount.Money()</dd>
+            <dt class="grand-total">Tổng cộng</dt><dd class="grand-total">@Model.Total.Money()</dd>
+        </dl>
+    </section>
+</div>
